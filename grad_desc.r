@@ -26,53 +26,79 @@ cols<-ncol(X)
 
 w = runif(cols,0,1)
 
-result = vector(mode="numeric",length = cols-1)
+
 e_temp_in <- vector(mode='numeric',length = 0)
 
-et=0.3
+e_in<-vector(mode='numeric',length = 0)
+
+line<-vector(mode='numeric',length=0)
+
+misses=vector(mode='numeric',length = 0)
 
 
-for(i in 1:50){
+et=0.7
+
+iteration<-vector(mode='numeric',length=0)
+
+for(i in 1:100){
   
-  result<-0
   #calculate E_in
+  result = vector(mode="numeric",length = cols-1)
   
   for(j in 1:rows){
     x= X[j,1:cols-1]
-    x=c(x,1)
+    x= c(x,1)
     y= X[j,cols]
-    wt<-t(w)
-    result = result+(y*x)/(1+exp(y*(wt*x)))
+    result = result+(y*x)/(1+exp(y*w%*%x))
   }
   
-  result<-t(result)
   E_in = -(result)/rows
-  w = w + et*E_in
+  w = w - et*E_in
   miss<-0
   
-  
+  result1=vector(mode='numeric',length = cols-1)
   
   for(k in 1:rows)
   {
-    error<-calculate_output(w,X[k,1:cols-1]) 
+   
+    x<-X[k,1:cols-1]
     y<-X[k,cols]
-    if(error==1 && y==0)      #checking for missclassification
-    {
-      local_error<-1
-    }
-    else if(error==0 && y==1)
-    {
-      local_error<-1
-    }
-    else if(error==y)
-    {
-      local_error<-0
-    }
+    x= c(x,1)
+    
+    result1 <- result1+log(1+exp(-y*w%*%x),base=exp(1))
+   
+    
+    h= 1/(1+exp(-w%*%x))
+  
+    
+   if(h>0.5 && y==0)
+   {
+     local_error<-1
+   }
+  else if(h>0.5 && y==1)
+  {
+    local_error=1
+  }
+  else
+  {
+    local_error=0
+  }
+    
     miss<-miss+local_error
   }
-  print(miss)
-  e_temp_in<-c(e_temp_in,miss)
-  print(w)
+  
+  result1<-result1/rows
+  
+  misses<-c(misses,miss)
+  e_in<-c(e_in,result1)
 }
-plot( e_temp_in,col="red",pch=10 )
-lines(e_temp_in)
+
+plot(misses,col="green",pch=10)
+lines(misses)
+#plot(e_in,col="red",pch=10)
+#lines(e_in)
+#class=as.factor(X[,cols])
+#plot(X,col=class,pch=10)
+#par(new=T)
+
+
